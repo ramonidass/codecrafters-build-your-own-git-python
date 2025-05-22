@@ -1,14 +1,17 @@
 import sys
 import os
+import zlib
 
 
 def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
 
-    # Uncomment this block to pass the first stage
+    if len(sys.argv) < 2:
+        print("Usage: mygit <command> [<args>]", file=sys.stderr)
+        sys.exit(1)
 
     command = sys.argv[1]
+
     if command == "init":
         os.mkdir(".git")
         os.mkdir(".git/objects")
@@ -54,14 +57,8 @@ def main():
             print(
                 f"Actual content length: {len(actual_content)} bytes", file=sys.stderr)
 
-            # 5. Print the actual blob content to standard output
-            #    The tests expect the output to be exactly the blob's content.
-            #    If the content is text, you might decode it, but for raw bytes,
-            #    writing directly to sys.stdout.buffer is safest.
-            #    The challenge usually expects text output, so decode and print without extra newline.
-            # Or actual_content.decode('utf-8')
             sys.stdout.write(actual_content.decode())
-            # print(actual_content.decode(), end="")
+            print(actual_content.decode(), end="")
 
         except FileNotFoundError:
             print(f"Error: Object {blob_sha} not found.", file=sys.stderr)
