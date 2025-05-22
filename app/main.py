@@ -23,7 +23,7 @@ def main():
     elif command == "cat-file":
 
         if len(sys.argv) < 4 or sys.argv[2] != "-p":
-            print("Usage: mygit cat-file -p <object_sha>", file=sys.stderr)
+            print("Usage: git cat-file -p <object_sha>", file=sys.stderr)
             sys.exit(1)
 
         blob_sha = sys.argv[3]
@@ -67,6 +67,12 @@ def main():
             sys.exit(1)
         except Exception as e:
             print(f"An unexpected error occurred: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif command == "hash-object":
+
+        if len(sys.argv) < 4 or sys.argv[2] != "-w":
+            print("Usage: git cat-file -p <file_name>", file=sys.stderr)
             sys.exit(1)
 
     else:
