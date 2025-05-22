@@ -23,6 +23,7 @@ def main():
         raise RuntimeError(f"Unknown command #{command}")
 
     if command == "cat-file":
+
         if len(sys.argv) < 4 or sys.argv[2] != "-p":
             print("Usage: mygit cat-file -p <object_sha>", file=sys.stderr)
             sys.exit(1)
