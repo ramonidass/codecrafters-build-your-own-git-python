@@ -46,7 +46,7 @@ def main():
             # 4. Parse the header (blob <size>\0content)
             #    Find the null byte that separates header from content
             header_end_index = decompressed_content.find(
-                b'\0')  # b'\0' because content is bytes
+                b'\x00')  # b'\0' because content is bytes
             if header_end_index == -1:
                 print(
                     "Error: Invalid blob object, no null byte separator found.", file=sys.stderr)
@@ -56,7 +56,6 @@ def main():
             print(
                 f"Actual content length: {len(actual_content)} bytes", file=sys.stderr)
 
-            sys.stdout.write(actual_content.decode())
             print(actual_content.decode(), end="")
 
         except FileNotFoundError:
