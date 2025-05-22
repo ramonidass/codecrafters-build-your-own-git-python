@@ -19,10 +19,8 @@ def main():
         with open(".git/HEAD", "w") as f:
             f.write("ref: refs/heads/main\n")
         print("Initialized git directory")
-    else:
-        raise RuntimeError(f"Unknown command #{command}")
 
-    if command == "cat-file":
+    elif command == "cat-file":
 
         if len(sys.argv) < 4 or sys.argv[2] != "-p":
             print("Usage: mygit cat-file -p <object_sha>", file=sys.stderr)
@@ -71,6 +69,9 @@ def main():
         except Exception as e:
             print(f"An unexpected error occurred: {e}", file=sys.stderr)
             sys.exit(1)
+
+    else:
+        raise RuntimeError(f"Unknown command #{command}")
 
 
 if __name__ == "__main__":
