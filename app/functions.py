@@ -54,14 +54,15 @@ def hash_object(input):
         with open(file, 'rb') as f:
             content = f.read()
 
-        compressed_data = zlib.compress(content)
-
         object_type = "blob"
         header = f"{object_type} {len(content)}\0".encode('utf-8')
-        object_content = header + compressed_data
+        object_content = header + content
 
-        # hash the combined header and compressed data
+        # hash the combined header and uncompressed data
         sha1_hash = hashlib.sha1(object_content).hexdigest()
+
+        compressed_data = zlib.compress(
+            object_content)  # Compress after hashing
 
         object_directory = os.path.join(".git", "objects", sha1_hash[:2])
         object_path = os.path.join(object_directory, sha1_hash[2:])
@@ -69,7 +70,7 @@ def hash_object(input):
         os.makedirs(object_directory, exist_ok=True)
 
         with open(object_path, 'wb') as f:
-            f.write(object_content)
+            f.write(compressed_data)  # Write the compressed data
 
         print(sha1_hash)
 

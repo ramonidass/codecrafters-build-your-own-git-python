@@ -1,6 +1,6 @@
 import sys
 import os
-from functions import cat_file, hash_object
+from app.functions import cat_file, hash_object
 
 
 def main():
