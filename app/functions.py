@@ -21,7 +21,7 @@ def cat_file(input):
         print(
             f"Decompressed to {len(decompressed_content)} bytes", file=sys.stderr)
 
-        # 4. Parse the header (blob <size>\0content)
+        # Parse the header (blob <size>\0content)
         #    Find the null byte that separates header from content
         header_end_index = decompressed_content.find(
             b'\x00')  # b'\0' because content is bytes
@@ -48,7 +48,6 @@ def cat_file(input):
 def hash_object(input):
 
     try:
-
         file = input[3]
 
         with open(file, 'rb') as f:
@@ -62,7 +61,7 @@ def hash_object(input):
         sha1_hash = hashlib.sha1(object_content).hexdigest()
 
         compressed_data = zlib.compress(
-            object_content)  # Compress after hashing
+            object_content)  # compress after hashing
 
         object_directory = os.path.join(".git", "objects", sha1_hash[:2])
         object_path = os.path.join(object_directory, sha1_hash[2:])
@@ -70,7 +69,7 @@ def hash_object(input):
         os.makedirs(object_directory, exist_ok=True)
 
         with open(object_path, 'wb') as f:
-            f.write(compressed_data)  # Write the compressed data
+            f.write(compressed_data)  # write the compressed data
 
         print(sha1_hash)
 
@@ -79,5 +78,53 @@ def hash_object(input):
     except PermissionError:
         print(
             f"Error: Permission denied to access '{file}' or create object.", file=sys.stderr)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+
+
+def ls_tree(input):
+
+    try:
+        tree_sha = input[3]
+        object_path = os.path.join(
+            ".git", "objects", tree_sha[:2], tree_sha[2:])
+        print(f"Looking for object at: {object_path}", file=sys.stderr)
+
+        with open(object_path, "rb") as f:
+            compressed_data = f.read()
+        decompressed_data = zlib.decompress(compressed_data)
+
+        header_end_index = decompressed_data.find(
+            b'\x00')
+
+        content = header_end_index + 1
+        current_index = content
+
+        while current_index < len(decompressed_data):
+
+            null_byte_index = decompressed_data.find(
+                b'\x00', current_index)  # start at current index
+
+            mode_and_filename = decompressed_data[current_index:null_byte_index]
+
+            try:
+                mode_and_filename_str = mode_and_filename.decode('utf-8')
+            except UnicodeDecodeError:
+                print("Error decoding mode and filename.")
+                return
+
+            # max split 1 (in case file name has a space)
+            str_parts = mode_and_filename_str.split(" ", 1)
+            if len(str_parts) != 2:
+                print("getting wrong string format")
+            filename = str_parts[1]
+            print(filename)
+            current_index = null_byte_index + 21
+
+    except FileNotFoundError:
+        print(f"Error: File '{tree_sha}' not found.", file=sys.stderr)
+    except PermissionError:
+        print(
+            f"Error: Permission denied to access '{tree_sha}' or create object.", file=sys.stderr)
     except Exception as e:
         print(f"An unexpected error occurred: {e}", file=sys.stderr)

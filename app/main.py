@@ -1,6 +1,7 @@
 import sys
 import os
-from app.functions import cat_file, hash_object
+# from functions import cat_file, hash_object, ls_tree
+from app.functions import cat_file, hash_object, ls_tree
 
 
 def main():
@@ -36,6 +37,15 @@ def main():
             sys.exit(1)
 
         hash_object(sys.argv)
+
+    elif command == "ls-tree":
+
+        if len(sys.argv) < 4:
+            print(
+                "Usage: ls-tree --name-only <tree-sha> or ls-tree <tree-sha>", file=sys.stderr)
+            sys.exit(1)
+
+        ls_tree(sys.argv)
 
     else:
         raise RuntimeError(f"Unknown command #{command}")
