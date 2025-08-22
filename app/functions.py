@@ -2,9 +2,11 @@ import sys
 import os
 import zlib
 import hashlib
+from typing import List, Tuple
+from pathlib import Path
 
 
-def cat_file(input):
+def cat_file(input: list[str]) -> None:
 
     blob_sha = input[3]
     try:
@@ -45,7 +47,7 @@ def cat_file(input):
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
 
 
-def hash_object(input):
+def hash_object(input: list[str]) -> None:
 
     try:
         file = input[3]
@@ -82,7 +84,7 @@ def hash_object(input):
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
 
 
-def ls_tree(input):
+def ls_tree(input: list[str]) -> None:
 
     try:
         tree_sha = input[3]
@@ -117,6 +119,7 @@ def ls_tree(input):
             str_parts = mode_and_filename_str.split(" ", 1)
             if len(str_parts) != 2:
                 print("getting wrong string format")
+
             filename = str_parts[1]
             print(filename)
             current_index = null_byte_index + 21
@@ -128,3 +131,73 @@ def ls_tree(input):
             f"Error: Permission denied to access '{tree_sha}' or create object.", file=sys.stderr)
     except Exception as e:
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
+
+
+def store_object(content: bytes) -> str:
+
+    sha1_hash = hashlib.sha1(content).hexdigest()
+    compressed_data = zlib.compress(content)
+
+    object_directory = Path(".git") / "objects" / sha1_hash[:2]
+    object_path = object_directory / sha1_hash[2:]
+
+    object_directory.mkdir(parents=True, exist_ok=True)
+
+    with open(object_path, 'wb') as f:
+        f.write(compressed_data)
+
+    return sha1_hash
+
+
+def write_tree(dir_path: Path) -> str:
+    entries: List[Tuple[str, str, str, str]] = []
+
+    for item_path in dir_path.iterdir():
+        if item_path.name == ".git":
+            continue
+
+        mode: str = ""
+        object_hash: str = ""
+        object_type: str = ""
+
+        if item_path.is_file():
+            with open(item_path, "rb") as f:
+                content = f.read()
+
+            # Construct blob content with Git header
+            blob_content_with_header = b"blob " + \
+                str(len(content)).encode() + b"\0" + content
+
+            object_hash = store_object(blob_content_with_header)
+
+            object_type = "blob"
+            mode = "100644"  # Standard file mode
+            if os.stat(item_path).st_mode & 0o111:  # Check if executable bit is set
+                mode = "100755"
+
+        elif item_path.is_dir():
+            object_type = "tree"
+            object_hash = write_tree(item_path)
+            mode = "40000"  # Directory mode
+        else:
+            continue  # Skip unknown types (e.g., symlinks)
+
+        if object_hash:
+            entries.append((mode, object_type, object_hash, item_path.name))
+
+    # Sort entries by name
+    entries.sort(key=lambda x: x[3])
+
+    tree_content = b""
+    for mode, obj_type, obj_hash, name in entries:
+        # Git tree entry format: <mode> <name>\0<hash_bytes>
+        tree_content += f"{mode} {name}".encode() + b"\0" + \
+            bytes.fromhex(obj_hash)
+
+    # Git tree object header: "tree <size>\0<tree_content>"
+    tree_header = f"tree {len(tree_content)}".encode() + b"\0"
+    final_tree_blob = tree_header + tree_content
+
+    tree_sha1_hash = store_object(final_tree_blob)
+
+    return tree_sha1_hash

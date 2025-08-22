@@ -1,7 +1,8 @@
 import sys
 import os
-# from functions import cat_file, hash_object, ls_tree
-from app.functions import cat_file, hash_object, ls_tree
+from pathlib import Path
+# from functions import cat_file, hash_object, ls_tree, write_tree
+from app.functions import cat_file, hash_object, ls_tree, write_tree
 
 
 def main():
@@ -46,6 +47,16 @@ def main():
             sys.exit(1)
 
         ls_tree(sys.argv)
+
+    elif command == "write-tree":
+
+        if len(sys.argv) < 2:
+            print(
+                "Usage: write-tree", file=sys.stderr)
+            sys.exit(1)
+
+        root_tree_hash = write_tree(Path("."))
+        print(root_tree_hash)
 
     else:
         raise RuntimeError(f"Unknown command #{command}")
